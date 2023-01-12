@@ -58,22 +58,26 @@ public class ABBluetoothDevices: NSObject, CBPeripheralDelegate, CBCentralManage
     
     public func startScanning() {
         self.centralManager = CBCentralManager(delegate: self, queue: nil)
-      
-        var bluetoothPermission:Bool
-        if #available(iOS 13.1, *) {
-            bluetoothPermission = CBCentralManager.authorization == .allowedAlways
-        } else if #available(iOS 13.0, *) {
-            bluetoothPermission = CBCentralManager().authorization == .allowedAlways
-        } else {
-            bluetoothPermission = true
-        }
         
-        if (!bluetoothPermission) {
+        var showBluetoothPermissionWarning = false
+        
+//        var bluetoothPermission:Bool
+        if #available(iOS 13.1, *) {
+            showBluetoothPermissionWarning = CBCentralManager.authorization == .denied ||
+                    CBCentralManager.authorization == .restricted
+        } else if #available(iOS 13.0, *) {
+            showBluetoothPermissionWarning = CBCentralManager().authorization == .denied ||
+                    CBCentralManager().authorization == .restricted
+        } else {
+//            bluetoothPermission = true
+        }
+
+        if (showBluetoothPermissionWarning) {
             print("No bluetooth permission.")
-            
+
             let alert = UIAlertController(title: "Brak Pozwolenia Bluetooth", message: "Żeby skorzystać z funkcji Bluetooth musisz zezwolić na jego wykorzystanie w ustawieniach telefonu.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-            
+
             UIApplication.shared.windows.last?.rootViewController?.present(alert, animated: true)
         } else {
             print("Starting scanning...")

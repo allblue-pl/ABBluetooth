@@ -175,15 +175,19 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         var s: CBService!
         if let services = peripheral.services {
             for service in services {
-                if service.uuid != ABBluetoothPrinterPeripheral.PrintingServiceUUID {
+                if !ABBluetoothPrinterPeripheral.PrintingServiceUUIDs.contains(service.uuid) {
                     continue
                 }
                 
                 s = service
+                break
             }
         }
         
-        self.peripheral.discoverCharacteristics(nil, for: s)
+        if (s != nil) {
+            print("Printing?")
+            self.peripheral.discoverCharacteristics(nil, for: s)
+        }
     }
     
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -271,6 +275,8 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
 class ABBluetoothPrinterPeripheral: NSObject {
     
     public static let PrinterUUID = CBUUID.init(string: "")
-    public static let PrintingServiceUUID = CBUUID.init(string: "18F0")
+    public static let PrintingServiceUUIDs = [ CBUUID.init(string: "18F0"), CBUUID.init(string: "1804") ]
+//    public static let PrintingServiceUUID = CBUUID.init(string: "18F0")
+//    public static let PrintingServiceUUID = CBUUID.init(string: "1804")
     
 }
