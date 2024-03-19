@@ -104,7 +104,9 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         let image_Data = image_ColorContext?.data
         let image_DataType = image_Data?.assumingMemoryBound(to: UInt8.self)
         
-        var image: [UInt8] = [UInt8](repeating: 0, count: 8 + (width / 8) * height)
+        let extraHeight = 100
+        
+        var image: [UInt8] = [UInt8](repeating: 0, count: 8 + (width / 8) * (height + extraHeight))
         
         image[0] = 0x1d
         image[1] = 0x76
@@ -112,22 +114,24 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         image[3] = 0x00
         image[4] = UInt8((width / 8) % 256)
         image[5] = UInt8((width / 8) / 256)
-        image[6] = UInt8(height % 256)
-        image[7] = UInt8(height / 256)
+        image[6] = UInt8((height + extraHeight) % 256)
+        image[7] = UInt8((height + extraHeight) / 256)
         
-        for i in 0..<height {
+        for i in 0..<(height+extraHeight) {
             for j in 0..<(width / 8) {
                 var colorByte: UInt8 = 0
                 
-                for k: UInt8 in 0..<8 {
-                    let bmpX = i
-                    let bmpY = j * 8 + Int(k)
-
-                    let offset = 4 * ((width * bmpX) + bmpY)
-//                    print("\(bmpX):\(bmpY)")
-//                    print("Test: \(offset) : " + String(image_DataType?[offset + 1] ?? 255))
-                    if (image_DataType?[offset + 1] ?? 255) < 128 {
-                        colorByte |= 1 << (7 - k)
+                if (i < height) {
+                    for k: UInt8 in 0..<8 {
+                        let bmpX = i
+                        let bmpY = j * 8 + Int(k)
+                        
+                        let offset = 4 * ((width * bmpX) + bmpY)
+                        //                    print("\(bmpX):\(bmpY)")
+                        //                    print("Test: \(offset) : " + String(image_DataType?[offset + 1] ?? 255))
+                        if (image_DataType?[offset + 1] ?? 255) < 128 {
+                            colorByte |= 1 << (7 - k)
+                        }
                     }
                 }
                 
@@ -185,7 +189,6 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         }
         
         if (s != nil) {
-            print("Printing?")
             self.peripheral.discoverCharacteristics(nil, for: s)
         }
     }
@@ -262,7 +265,7 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
             return nil
         }
         
-        let length = min(64, data.count)
+        let length = min(32, data.count)
         let range = 0..<length
         let subData = data.subdata(in: range)
         data.removeSubrange(range)
