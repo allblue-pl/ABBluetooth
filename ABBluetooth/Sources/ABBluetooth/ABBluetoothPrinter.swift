@@ -9,7 +9,8 @@ import CoreBluetooth
 import SwiftUI
 
 public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
-    private var paperWidth: Int
+    private var defaultPaperWidth: Int
+    private var paperWidths: [String:Int]
     
     private var printerAddress: String?
     private var image: UIImage?
@@ -21,8 +22,9 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
     private var dataToSend: Data!
     
     
-    public init(paperWidth: Int) {
-        self.paperWidth = paperWidth
+    public init(defaultPaperWidth: Int, paperWidths: [String:Int] = [:]) {
+        self.defaultPaperWidth = defaultPaperWidth
+        self.paperWidths = paperWidths
     }
     
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
@@ -61,7 +63,12 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         }
     
         /* 568 / 376 */
-        let width = self.paperWidth
+        var width = defaultPaperWidth
+        for (peripheralName, paperWidth) in paperWidths {
+            if peripheralName == peripheral.name ?? "#unknown" {
+                width = paperWidth
+            }
+        }
         let f = Float(width) / Float(self.image?.size.width ?? 0.0)
         let height = Int(Float(self.image?.size.height ?? 0.0) * f)
         
