@@ -1,12 +1,7 @@
-//
-//  BluetoothPrinter.swift
-//  Rocko Interval Timer
-//
-//  Created by Jakub Zolcik on 16/03/2021.
-//
-
 import CoreBluetooth
 import SwiftUI
+
+import ABLibs
 
 public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
     private var printerAddress: String?
@@ -20,13 +15,13 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
     private var compareLimit: Int
     
     private var errorFn: (_ errorMessage: String) -> Void
-    private var warningFn: (_ errorMessage: String) -> Void
+    private var messageFn: (_ message: String) -> Void
     
     
-    public init(errorFn: @escaping ((_ errorMessage: String) -> Void), warningFn: @escaping ((_ warningMessage: String) -> Void)) {
+    public init(errorFn: @escaping ((_ errorMessage: String) -> Void), messageFn: @escaping ((_ warningMessage: String) -> Void)) {
         self.compareLimit = 0
         self.errorFn = errorFn
-        self.warningFn = warningFn
+        self.messageFn = messageFn
     }
     
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
@@ -56,7 +51,7 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
             compareLimit -= 1
             if (compareLimit <= 0) {
                 self.centralManager.stopScan()
-                errorFn("Nie udało się znaleźć drukarki.")
+                errorFn(Lang.t(TABBluetooth.errors_CannotFindPrinter))
                 reset()
             }
         }
@@ -73,28 +68,28 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         }
         
         guard self.characteristic != nil else {
-            errorFn("Nie znaleziono obsługiwanego protokołu bluetooth")
+            errorFn(Lang.t(TABBluetooth.errors_CannotFindSupportedProtocol))
             reset()
             return
         }
     
         
         guard printImageFn != nil else {
-            errorFn("Nieznany błąd")
+            errorFn(Lang.t(TABBluetooth.errors_UnknownError))
             reset()
             return
         }
         
-        let (paperWidth, image, errorMessage) = printImageFn!(peripheral)
+        let (paperWidth, image, message) = printImageFn!(peripheral)
         
-        if let errorMessage {
-            warningFn(errorMessage)
+        if let message {
+            messageFn(message)
         }
         
         if let image {
             sendImageData(img: image, width: paperWidth)
         } else {
-            errorFn("Nie udało się wygenerować wydruku")
+            errorFn(Lang.t(TABBluetooth.errors_CannotGenerateImage))
             reset()
         }
     }
@@ -115,7 +110,7 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         if let s {
             self.peripheral.discoverCharacteristics(nil, for: s)
         } else {
-            errorFn("Nie znaleziono usługi drukowania")
+            errorFn(Lang.t(TABBluetooth.errors_CannotFindPrintingService))
         }
     }
     
@@ -180,7 +175,7 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         if (!bluetoothPermission) {
             print("No bluetooth permission.")
             
-            errorFn("Brak Pozwolenia Bluetooth. Żeby skorzystać z funkcji Bluetooth musisz zezwolić na jego wykorzystanie w ustawieniach telefonu.")
+            errorFn(Lang.t(TABBluetooth.errors_NoBluetoothPermission))
             
             reset()
 //            let alert = UIAlertController(title: "Brak Pozwolenia Bluetooth", message: "Żeby skorzystać z funkcji Bluetooth musisz zezwolić na jego wykorzystanie w ustawieniach telefonu.", preferredStyle: .alert)
