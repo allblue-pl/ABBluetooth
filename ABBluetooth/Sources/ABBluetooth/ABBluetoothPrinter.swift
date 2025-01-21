@@ -4,6 +4,8 @@ import SwiftUI
 import ABLibs
 
 public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
+    static let packetLength = 32
+    
     private var printerAddress: String?
     private var printImageFn: ((_ peripheral: CBPeripheral) -> (Int, UIImage?, String?))?
     
@@ -37,9 +39,9 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
     }
     
     public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [ String: Any ], rssi RSSI: NSNumber) {
-        print("Comparing " + peripheral.identifier.uuidString + ":" + self.printerAddress!)
+        print("ABBluetoothPrinter -> Comparing " + peripheral.identifier.uuidString + ":" + self.printerAddress!)
         if (peripheral.identifier.uuidString == self.printerAddress && self.peripheral == nil) {
-            print("Dicovered: " + (peripheral.name ?? "-"))
+            print("ABBluetoothPrinter -> Dicovered: " + (peripheral.name ?? "-"))
             
             self.peripheral = peripheral
             self.peripheral.delegate = self
@@ -193,7 +195,7 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
             return nil
         }
         
-        let length = min(32, data.count)
+        let length = min(ABBluetoothPrinter.packetLength, data.count)
         let range = 0..<length
         let subData = data.subdata(in: range)
         data.removeSubrange(range)
@@ -210,7 +212,7 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
         let f = Float(width) / Float(img.size.width)
         let height = Int(Float(img.size.height) * f)
 
-        print("Size \(width) x \(height)")
+//        print("Size \(width) x \(height)")
 
         /* Scale Image */
         let image_Size = CGSize(width: width, height: height)
@@ -315,7 +317,7 @@ public class ABBluetoothPrinter: NSObject, CBPeripheralDelegate, CBCentralManage
     ////            print("Sent some data")
     //        }
     
-            print("Sent all data")
+            print("ABBluetoothPrinter -> Sent all data")
     
     //        self.centralManager.cancelPeripheralConnection(self.peripheral)
     }
