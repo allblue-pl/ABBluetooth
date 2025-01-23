@@ -8,11 +8,11 @@ public struct ABBluetoothDevicesListView: View {
     }
 
     public var body: some View {
-        List(self.model.discoveredDevices) { device in
+        List(self.model.discoveredDevices) { deviceInfo in
             HStack {
-                Button(device.name) {
+                Button(deviceInfo.name) {
                     if let listener = model.listeners_OnDeviceSelected {
-                        listener(device)
+                        listener(deviceInfo)
                     }
                 }
             }
@@ -27,12 +27,12 @@ public struct ABBluetoothDevicesListView: View {
 }
 
 public class ABBluetoothDevicesListModel: ObservableObject {
-    @Published public var discoveredDevices: [DeviceInfo];
+    @Published public var discoveredDevices: [ABBluetoothDeviceInfo];
     
     var errorFn: (_ errorMessage: String) -> Void
     var btDevices: ABBluetoothDevices
     
-    var listeners_OnDeviceSelected: ((DeviceInfo) -> Void)?
+    var listeners_OnDeviceSelected: ((ABBluetoothDeviceInfo) -> Void)?
     
     deinit {
         self.btDevices.stopScanning()
@@ -47,29 +47,15 @@ public class ABBluetoothDevicesListModel: ObservableObject {
         self.listeners_OnDeviceSelected = nil
         
         self.btDevices.setListener_OnDiscover {
-            self.discoveredDevices = [DeviceInfo]()
+            self.discoveredDevices = [ABBluetoothDeviceInfo]()
             for device in self.btDevices.getDiscoveredDevices() {
-                self.discoveredDevices.append(DeviceInfo(uuid: device.identifier.uuidString, name: device.name ?? "-"))
+                self.discoveredDevices.append(ABBluetoothDeviceInfo(uuid: device.identifier.uuidString, name: device.name ?? "-"))
             }
         }
     }
     
-    public func setListener_OnDeviceSelected(listener: @escaping (DeviceInfo) -> Void) {
-        self.listeners_OnDeviceSelected = listener
-    }
-    
-    
-    public struct DeviceInfo: Identifiable {
-        public var id = UUID()
-        
-        public var uuid: String
-        public var name: String
-        
-        public init(uuid: String, name: String) {
-            self.uuid = uuid
-            self.name = name
-        }
-        
+    public func setListener_OnDeviceSelected(onDeviceSelected: @escaping (ABBluetoothDeviceInfo) -> Void) {
+        self.listeners_OnDeviceSelected = onDeviceSelected
     }
 }
 
